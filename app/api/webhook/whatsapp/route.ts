@@ -118,7 +118,7 @@ async function processIncomingMessage(
 
   // 4. Debounce — esperar 4s por si vienen más mensajes seguidos
   const savedAt = new Date();
-  await new Promise((r) => setTimeout(r, 4000));
+  await new Promise((r) => setTimeout(r, 6000));
 
   const [freshConv] = await db
     .select()
