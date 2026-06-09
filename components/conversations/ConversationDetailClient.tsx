@@ -129,7 +129,7 @@ export default function ConversationDetailClient({ id }: { id: string }) {
             (m) =>
               m.content === msg.content &&
               m.direction === msg.direction &&
-              Math.abs(new Date(m.sentAt).getTime() - new Date(msg.sentAt).getTime()) < 10_000
+              Math.abs(new Date(m.sentAt).getTime() - new Date(msg.sentAt).getTime()) < 60_000
           ) === idx
         ).map((msg) => (
           <div
