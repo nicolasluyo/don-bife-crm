@@ -2,15 +2,49 @@ import MetricsCards from "./MetricsCards";
 import ActivityChart from "./ActivityChart";
 import ReservationsToday from "./ReservationsToday";
 import RecentConversations from "./RecentConversations";
+import { db, messages, conversations, reservations, customers } from "@/lib/db";
+import { eq, gte, sql, count, and } from "drizzle-orm";
 
 async function getMetrics() {
   try {
-    const base = process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : "http://localhost:3000";
-    const res = await fetch(`${base}/api/metrics`, { cache: "no-store" });
-    if (!res.ok) return null;
-    return res.json();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const weekAgo = new Date(today);
+    weekAgo.setDate(weekAgo.getDate() - 7);
+
+    const [totalCustomers] = await db.select({ count: count() }).from(customers);
+    const [activeConversations] = await db.select({ count: count() }).from(conversations).where(eq(conversations.status, "active"));
+    const [needsHuman] = await db.select({ count: count() }).from(conversations).where(eq(conversations.status, "needs_human"));
+    const [todayMessages] = await db.select({ count: count() }).from(messages).where(gte(messages.sentAt, today));
+    const [weekMessages] = await db.select({ count: count() }).from(messages).where(gte(messages.sentAt, weekAgo));
+
+    const todayStr = today.toLocaleDateString("es-PE", { day: "2-digit", month: "2-digit", year: "numeric" });
+    const todayReservations = await db.select().from(reservations).where(and(eq(reservations.date, todayStr), eq(reservations.status, "confirmed")));
+
+    const [confirmedReservations] = await db.select({ count: count() }).from(reservations).where(eq(reservations.status, "confirmed"));
+
+    const dailyMessages = await db
+      .select({
+        day: sql<string>`DATE(${messages.sentAt})`,
+        total: count(),
+        incoming: sql<number>`SUM(CASE WHEN ${messages.direction} = 'incoming' THEN 1 ELSE 0 END)`,
+        outgoing: sql<number>`SUM(CASE WHEN ${messages.direction} = 'outgoing' THEN 1 ELSE 0 END)`,
+      })
+      .from(messages)
+      .where(gte(messages.sentAt, weekAgo))
+      .groupBy(sql`DATE(${messages.sentAt})`)
+      .orderBy(sql`DATE(${messages.sentAt})`);
+
+    return {
+      totalCustomers: totalCustomers.count,
+      activeConversations: activeConversations.count,
+      needsHuman: needsHuman.count,
+      todayMessages: todayMessages.count,
+      weekMessages: weekMessages.count,
+      confirmedReservations: confirmedReservations.count,
+      todayReservations,
+      dailyMessages,
+    };
   } catch {
     return null;
   }
