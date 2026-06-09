@@ -129,7 +129,7 @@ async function processIncomingMessage(
     return;
   }
 
-  // 5. Cargar historial y agrupar mensajes pendientes
+  // 5. Cargar historial y agrupar mensajes del batch actual (últimos 30s)
   const history = await db
     .select()
     .from(messages)
@@ -137,18 +137,17 @@ async function processIncomingMessage(
     .orderBy(messages.sentAt)
     .limit(30);
 
-  const lastOutgoingIdx = [...history].reverse().findIndex((m) => m.direction === "outgoing");
-  const pendingIncoming = lastOutgoingIdx === -1
-    ? history.filter((m) => m.direction === "incoming")
-    : history.slice(history.length - lastOutgoingIdx).filter((m) => m.direction === "incoming");
+  const windowStart = new Date(Date.now() - 30_000);
+  const pendingIncoming = history.filter(
+    (m) => m.direction === "incoming" && m.sentAt >= windowStart
+  );
 
-  const combinedText = pendingIncoming.length > 1
+  const combinedText = pendingIncoming.length > 0
     ? pendingIncoming.map((m) => m.content).join("\n")
     : text;
 
   const messageHistory = history
-    .filter((m) => m.direction === "outgoing" || !pendingIncoming.find((p) => p.id === m.id))
-    .slice(0, -pendingIncoming.length || undefined)
+    .filter((m) => !pendingIncoming.find((p) => p.id === m.id))
     .map((m) => ({
       role: m.direction === "incoming" ? ("user" as const) : ("assistant" as const),
       content: m.content,
