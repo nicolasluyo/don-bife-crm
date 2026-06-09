@@ -4,7 +4,11 @@ import { eq, and, sql } from "drizzle-orm";
 import { AGENT_SYSTEM_PROMPT, RESTAURANT_INFO } from "./constants";
 import { sendReservationEmail, sendCancellationEmail } from "./notifications";
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+function getAnthropic() {
+  const key = process.env.ANTHROPIC_API_KEY?.trim();
+  if (!key) throw new Error("ANTHROPIC_API_KEY no está configurado");
+  return new Anthropic({ apiKey: key });
+}
 
 const tools: Anthropic.Tool[] = [
   {
@@ -222,6 +226,8 @@ export async function runAgent(params: {
     })),
     { role: "user" as const, content: newMessage },
   ];
+
+  const anthropic = getAnthropic();
 
   let response = await anthropic.messages.create({
     model: "claude-sonnet-4-6",
