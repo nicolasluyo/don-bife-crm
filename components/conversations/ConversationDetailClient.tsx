@@ -124,7 +124,14 @@ export default function ConversationDetailClient({ id }: { id: string }) {
       </div>
 
       <div className="flex-1 overflow-y-auto px-8 py-6 space-y-3">
-        {data.messages.map((msg) => (
+        {data.messages.filter((msg, idx, arr) =>
+          arr.findIndex(
+            (m) =>
+              m.content === msg.content &&
+              m.direction === msg.direction &&
+              Math.abs(new Date(m.sentAt).getTime() - new Date(msg.sentAt).getTime()) < 10_000
+          ) === idx
+        ).map((msg) => (
           <div
             key={msg.id}
             className={cn(
