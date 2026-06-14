@@ -9,7 +9,7 @@ export default function DashboardPage() {
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-stone-900">Dashboard</h1>
         <p className="text-stone-500 text-sm mt-1">
-          Resumen de actividad — Don Bife 🔥
+          Resumen de actividad — Los Postres de Patty 🍰
         </p>
       </div>
       <Suspense fallback={<DashboardSkeleton />}>

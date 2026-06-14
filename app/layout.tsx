@@ -6,8 +6,8 @@ import Sidebar from "@/components/Sidebar";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Don Bife CRM — Agente IA",
-  description: "Panel de gestión de conversaciones y reservas de Don Bife — Las mejores carnes y parrillas de Piura",
+  title: "Los Postres de Patty CRM — Agente IA",
+  description: "Panel de gestión de conversaciones y reservas de Los Postres de Patty — Pastelería y cafetería en Real Plaza Piura",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

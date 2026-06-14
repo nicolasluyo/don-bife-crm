@@ -8,7 +8,7 @@ import {
   MessageSquare,
   CalendarDays,
   Users,
-  Flame,
+  CakeSlice,
 } from "lucide-react";
 
 const nav = [
@@ -26,11 +26,11 @@ export default function Sidebar() {
       <div className="px-6 py-5 border-b border-stone-200">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 bg-red-800 rounded-xl flex items-center justify-center">
-            <Flame className="w-5 h-5 text-white" />
+            <CakeSlice className="w-5 h-5 text-white" />
           </div>
           <div>
-            <p className="font-semibold text-stone-900 text-sm leading-tight">Don Bife</p>
-            <p className="text-xs text-stone-500">Agente IA 🔥</p>
+            <p className="font-semibold text-stone-900 text-sm leading-tight">Los Postres de Patty</p>
+            <p className="text-xs text-stone-500">Agente IA 🍰</p>
           </div>
         </div>
       </div>
