@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   MessageSquare,
   CalendarDays,
+  ShoppingBag,
   Users,
   CakeSlice,
 } from "lucide-react";
@@ -15,6 +16,7 @@ const nav = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/conversations", label: "Conversaciones", icon: MessageSquare },
   { href: "/reservations", label: "Reservas", icon: CalendarDays },
+  { href: "/orders", label: "Pedidos", icon: ShoppingBag },
   { href: "/customers", label: "Clientes", icon: Users },
 ];
 

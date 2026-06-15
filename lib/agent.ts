@@ -1,8 +1,8 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { db, reservations, agentLogs, products } from "./db";
+import { db, reservations, agentLogs, products, orders } from "./db";
 import { eq, and, sql } from "drizzle-orm";
 import { AGENT_SYSTEM_PROMPT, RESTAURANT_INFO } from "./constants";
-import { sendReservationEmail, sendCancellationEmail } from "./notifications";
+import { sendReservationEmail, sendCancellationEmail, sendOrderEmail } from "./notifications";
 import { embedText } from "./embeddings";
 
 function getAnthropic() {
@@ -92,6 +92,23 @@ const tools: Anthropic.Tool[] = [
         },
       },
       required: ["query"],
+    },
+  },
+  {
+    name: "create_order",
+    description:
+      "Registra un PEDIDO de pastelería (torta, postre, etc.) para encargar/llevar. Úsala solo cuando el cliente confirme que quiere encargar un producto, NO para reservar una mesa (para eso está create_reservation). Antes de llamarla confirma con el cliente los 5 datos requeridos. Recuerda que las tortas necesitan al menos 24-48 h de anticipación.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        customerName: { type: "string", description: "Nombre del cliente" },
+        phone: { type: "string", description: "Teléfono o WhatsApp del cliente" },
+        product: { type: "string", description: "Producto que desea pedir (ej: 'Torta Red Velvet corazón')" },
+        dueDate: { type: "string", description: "Fecha en que lo necesita, formato DD/MM/YYYY" },
+        deliveryType: { type: "string", enum: ["recojo", "delivery"], description: "Tipo de entrega: recojo en tienda o delivery" },
+        notes: { type: "string", description: "Detalles adicionales del pedido (sabor, tamaño, dedicatoria, etc.) (opcional)" },
+      },
+      required: ["customerName", "phone", "product", "dueDate", "deliveryType"],
     },
   },
 ];
@@ -237,6 +254,36 @@ async function executeTool(
             })
             .join("\n")
         : "No encontré productos en la carta que coincidan con esa búsqueda.";
+    }
+
+    else if (toolName === "create_order") {
+      const input = toolInput as {
+        customerName: string;
+        phone: string;
+        product: string;
+        dueDate: string;
+        deliveryType: string;
+        notes?: string;
+      };
+
+      const [order] = await db
+        .insert(orders)
+        .values({
+          customerId: context.customerId,
+          customerName: input.customerName,
+          phone: input.phone,
+          product: input.product,
+          dueDate: input.dueDate,
+          deliveryType: input.deliveryType === "delivery" ? "delivery" : "recojo",
+          notes: input.notes,
+          status: "pending",
+        })
+        .returning();
+
+      await sendOrderEmail(order).catch(console.error);
+
+      const entrega = order.deliveryType === "delivery" ? "delivery" : "recojo en tienda";
+      result = `Pedido registrado. ID: ${order.id}. ${input.customerName} — ${input.product} — para el ${input.dueDate} (${entrega}).`;
     }
 
     else {

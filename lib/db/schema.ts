@@ -77,6 +77,20 @@ export const reservations = pgTable("reservations", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+export const orders = pgTable("orders", {
+  id: serial("id").primaryKey(),
+  customerId: integer("customer_id").references(() => customers.id),
+  customerName: text("customer_name").notNull(),
+  phone: text("phone").notNull(),
+  product: text("product").notNull(),
+  dueDate: text("due_date").notNull(),
+  deliveryType: text("delivery_type").notNull(), // "recojo" | "delivery"
+  notes: text("notes"),
+  status: text("status").default("pending").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 export const products = pgTable(
   "products",
   {
@@ -114,3 +128,4 @@ export type Message = typeof messages.$inferSelect;
 export type Reservation = typeof reservations.$inferSelect;
 export type AgentLog = typeof agentLogs.$inferSelect;
 export type Product = typeof products.$inferSelect;
+export type Order = typeof orders.$inferSelect;
