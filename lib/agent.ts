@@ -1,8 +1,9 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { db, reservations, agentLogs } from "./db";
+import { db, reservations, agentLogs, products } from "./db";
 import { eq, and, sql } from "drizzle-orm";
 import { AGENT_SYSTEM_PROMPT, RESTAURANT_INFO } from "./constants";
 import { sendReservationEmail, sendCancellationEmail } from "./notifications";
+import { embedText } from "./embeddings";
 
 function getAnthropic() {
   const key = process.env.ANTHROPIC_API_KEY?.trim();
@@ -76,6 +77,21 @@ const tools: Anthropic.Tool[] = [
         reservationId: { type: "number", description: "ID de la reserva a cancelar" },
       },
       required: ["reservationId"],
+    },
+  },
+  {
+    name: "search_menu",
+    description:
+      "Busca platos, bebidas y postres en la carta real de Los Postres de Patty por similitud semántica. ÚSALA SIEMPRE que el cliente pregunte por cualquier comida, bebida, postre, precio, ingrediente o disponibilidad del menú (ej: '¿qué tortas tienen?', 'algo frío con café', '¿cuánto cuesta el cheesecake?'). Devuelve los productos más parecidos con su precio. No inventes productos ni precios: usa solo lo que devuelve esta herramienta.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        query: {
+          type: "string",
+          description: "Lo que busca el cliente, en sus propias palabras (ej: 'tortas de chocolate', 'café frío', 'algo para compartir').",
+        },
+      },
+      required: ["query"],
     },
   },
 ];
@@ -192,6 +208,35 @@ async function executeTool(
       }
 
       result = `Reserva ${reservationId} cancelada correctamente.`;
+    }
+
+    else if (toolName === "search_menu") {
+      const { query } = toolInput as { query: string };
+      const embedding = await embedText(query);
+      const vectorLiteral = JSON.stringify(embedding);
+
+      const matches = await db
+        .select({
+          producto: products.producto,
+          categoria: products.categoria,
+          subcategoria: products.subcategoria,
+          descripcion: products.descripcion,
+          precio: products.precio,
+        })
+        .from(products)
+        .orderBy(sql`${products.embedding} <=> ${vectorLiteral}::vector`)
+        .limit(5);
+
+      result = matches.length
+        ? matches
+            .map((m) => {
+              const cat = m.subcategoria ? `${m.categoria} / ${m.subcategoria}` : m.categoria;
+              const precio = m.precio != null ? ` — S/ ${m.precio}` : "";
+              const desc = m.descripcion ? ` · ${m.descripcion}` : "";
+              return `${m.producto} (${cat})${precio}${desc}`;
+            })
+            .join("\n")
+        : "No encontré productos en la carta que coincidan con esa búsqueda.";
     }
 
     else {

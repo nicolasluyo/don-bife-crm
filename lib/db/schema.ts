@@ -6,6 +6,9 @@ import {
   boolean,
   serial,
   pgEnum,
+  numeric,
+  vector,
+  index,
 } from "drizzle-orm/pg-core";
 
 export const conversationStatusEnum = pgEnum("conversation_status", [
@@ -74,6 +77,27 @@ export const reservations = pgTable("reservations", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+export const products = pgTable(
+  "products",
+  {
+    id: serial("id").primaryKey(),
+    categoriaSeccion: text("categoria_seccion").notNull(),
+    categoria: text("categoria").notNull(),
+    subcategoria: text("subcategoria"),
+    producto: text("producto").notNull(),
+    descripcion: text("descripcion"),
+    precio: numeric("precio", { precision: 6, scale: 2 }),
+    embedding: vector("embedding", { dimensions: 1536 }),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("products_embedding_idx").using(
+      "hnsw",
+      table.embedding.op("vector_cosine_ops")
+    ),
+  ]
+);
+
 export const agentLogs = pgTable("agent_logs", {
   id: serial("id").primaryKey(),
   conversationId: integer("conversation_id").references(() => conversations.id),
@@ -89,3 +113,4 @@ export type Conversation = typeof conversations.$inferSelect;
 export type Message = typeof messages.$inferSelect;
 export type Reservation = typeof reservations.$inferSelect;
 export type AgentLog = typeof agentLogs.$inferSelect;
+export type Product = typeof products.$inferSelect;
