@@ -50,7 +50,7 @@ export default function ConversationsClient() {
 
   return (
     <div className="flex-1 flex flex-col">
-      <div className="px-8 py-4 flex items-center gap-2 border-b border-stone-100 bg-white">
+      <div className="px-4 sm:px-8 py-4 flex items-center gap-2 flex-wrap border-b border-stone-100 bg-white">
         {filters.map((f) => (
           <button
             key={f.value}
@@ -69,7 +69,7 @@ export default function ConversationsClient() {
 
       <div className="flex-1 overflow-y-auto">
         {loading ? (
-          <div className="p-8 space-y-3">
+          <div className="p-4 sm:p-8 space-y-3">
             {[...Array(5)].map((_, i) => (
               <div key={i} className="h-16 bg-stone-100 rounded-xl animate-pulse" />
             ))}
@@ -88,7 +88,7 @@ export default function ConversationsClient() {
                 <Link
                   key={conv.id}
                   href={`/conversations/${conv.id}`}
-                  className="flex items-center gap-4 px-8 py-4 hover:bg-stone-50 transition-colors"
+                  className="flex items-center gap-4 px-4 sm:px-8 py-4 hover:bg-stone-50 transition-colors"
                 >
                   <div className="w-10 h-10 rounded-full bg-gradient-to-br from-red-700 to-red-900 flex items-center justify-center text-white font-semibold text-sm shrink-0">
                     {name.charAt(0).toUpperCase()}

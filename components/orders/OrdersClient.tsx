@@ -68,7 +68,7 @@ export default function OrdersClient() {
 
   return (
     <div>
-      <div className="flex items-center gap-2 mb-4">
+      <div className="flex items-center gap-2 flex-wrap mb-4">
         {filters.map((f) => (
           <button
             key={f.value}
@@ -98,7 +98,8 @@ export default function OrdersClient() {
             <p className="font-medium">Sin pedidos</p>
           </div>
         ) : (
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="w-full text-sm min-w-[640px]">
             <thead>
               <tr className="border-b border-stone-200 bg-stone-50">
                 <th className="text-left px-4 py-3 font-medium text-stone-500">Cliente</th>
@@ -177,6 +178,7 @@ export default function OrdersClient() {
               })}
             </tbody>
           </table>
+          </div>
         )}
       </div>
     </div>

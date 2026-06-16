@@ -80,8 +80,8 @@ export default function ReservationsClient() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex gap-2">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
+        <div className="flex gap-2 flex-wrap">
           {filters.map((f) => (
             <button
               key={f.value}
@@ -118,7 +118,8 @@ export default function ReservationsClient() {
             <p className="font-medium">Sin reservas</p>
           </div>
         ) : (
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="w-full text-sm min-w-[680px]">
             <thead>
               <tr className="border-b border-stone-200 bg-stone-50">
                 <th className="text-left px-4 py-3 font-medium text-stone-500">Cliente</th>
@@ -191,6 +192,7 @@ export default function ReservationsClient() {
               })}
             </tbody>
           </table>
+          </div>
         )}
       </div>
 

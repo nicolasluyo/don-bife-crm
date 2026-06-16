@@ -48,7 +48,7 @@ export default function MetricsCards({ metrics }: MetricsCardsProps) {
   ];
 
   return (
-    <div className="grid grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
       {cards.map(({ label, value, sub, icon: Icon, color, bg }) => (
         <div
           key={label}

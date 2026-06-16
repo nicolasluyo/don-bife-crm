@@ -58,7 +58,7 @@ export default function ConversationDetailClient({ id }: { id: string }) {
 
   if (loading) {
     return (
-      <div className="flex-1 p-8 animate-pulse space-y-4">
+      <div className="flex-1 p-4 sm:p-8 animate-pulse space-y-4">
         {[...Array(6)].map((_, i) => (
           <div
             key={i}
@@ -85,13 +85,13 @@ export default function ConversationDetailClient({ id }: { id: string }) {
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
-      <div className="px-8 py-3 bg-stone-50 border-b border-stone-200 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-red-700 to-red-900 flex items-center justify-center text-white font-semibold text-sm">
+      <div className="px-4 sm:px-8 py-3 bg-stone-50 border-b border-stone-200 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-red-700 to-red-900 flex items-center justify-center text-white font-semibold text-sm shrink-0">
             {name.charAt(0).toUpperCase()}
           </div>
-          <div>
-            <p className="font-semibold text-stone-800 text-sm">{name}</p>
+          <div className="min-w-0">
+            <p className="font-semibold text-stone-800 text-sm truncate">{name}</p>
             {data.customer.username && (
               <p className="text-xs text-stone-400">WhatsApp: {data.customer.username}</p>
             )}
@@ -102,7 +102,7 @@ export default function ConversationDetailClient({ id }: { id: string }) {
           onClick={toggleAgent}
           disabled={toggling}
           className={cn(
-            "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors border",
+            "flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-colors border shrink-0",
             data.agentEnabled
               ? "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100"
               : "bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100"
@@ -124,7 +124,7 @@ export default function ConversationDetailClient({ id }: { id: string }) {
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-8 py-6 space-y-3">
+      <div className="flex-1 overflow-y-auto px-4 sm:px-8 py-4 sm:py-6 space-y-3">
         {data.messages.filter((msg, idx, arr) => {
           if (!msg.instagramMessageId) return true;
           return arr.findIndex((m) => m.instagramMessageId === msg.instagramMessageId) === idx;
@@ -138,7 +138,7 @@ export default function ConversationDetailClient({ id }: { id: string }) {
           >
             <div
               className={cn(
-                "max-w-[70%] px-4 py-2.5 rounded-2xl text-sm",
+                "max-w-[85%] sm:max-w-[70%] px-4 py-2.5 rounded-2xl text-sm",
                 msg.direction === "incoming"
                   ? "bg-white border border-stone-200 text-stone-800 rounded-tl-sm"
                   : "bg-red-800 text-white rounded-tr-sm"

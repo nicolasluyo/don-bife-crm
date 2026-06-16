@@ -13,7 +13,7 @@ export default async function ConversationDetailPage({
 
   return (
     <div className="h-full flex flex-col">
-      <div className="px-8 py-5 border-b border-stone-200 bg-white flex items-center gap-3">
+      <div className="px-4 sm:px-8 py-4 sm:py-5 border-b border-stone-200 bg-white flex items-center gap-3">
         <Link
           href="/conversations"
           className="text-stone-500 hover:text-stone-800 transition-colors"
