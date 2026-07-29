@@ -1,10 +1,17 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { db, customers, conversations, messages } from "@/lib/db";
 import { eq, and } from "drizzle-orm";
 import { runAgent } from "@/lib/agent";
 import { sendWhatsAppMessage } from "@/lib/whatsapp";
 
 export const dynamic = "force-dynamic";
+// Da margen para el debounce (6s) + el agente + el envío en segundo plano.
+export const maxDuration = 30;
+
+// Ignoramos mensajes cuya marca de tiempo (la que envía Meta) sea más vieja que
+// esto: son reintentos atrasados de Meta (p. ej. tras una caída de la base) y no
+// deben disparar una respuesta "de la nada".
+const MAX_MESSAGE_AGE_SECONDS = 5 * 60;
 
 export async function GET(req: NextRequest) {
   const searchParams = req.nextUrl.searchParams;
@@ -27,6 +34,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ status: "ignored" });
   }
 
+  // 1. Recolectar los mensajes de texto válidos y recientes.
+  const jobs: Array<{
+    senderPhone: string;
+    text: string;
+    messageId: string;
+    contact?: { profile?: { name?: string }; wa_id?: string };
+  }> = [];
+  const nowSeconds = Date.now() / 1000;
+
   for (const entry of body.entry ?? []) {
     for (const change of entry.changes ?? []) {
       const value = change.value;
@@ -38,9 +54,32 @@ export async function POST(req: NextRequest) {
         const text = msg.text?.body;
         if (!senderPhone || !text) continue;
 
-        await processIncomingMessage(senderPhone, text, msg.id, value.contacts?.[0]);
+        // Descartar reintentos atrasados de Meta (mensajes viejos).
+        const ts = Number(msg.timestamp);
+        if (Number.isFinite(ts) && nowSeconds - ts > MAX_MESSAGE_AGE_SECONDS) {
+          console.warn(
+            `Ignorando mensaje atrasado (${Math.round(nowSeconds - ts)}s de antigüedad): ${msg.id}`
+          );
+          continue;
+        }
+
+        jobs.push({ senderPhone, text, messageId: msg.id, contact: value.contacts?.[0] });
       }
     }
+  }
+
+  // 2. Responder 200 a Meta de inmediato y procesar en segundo plano, para que
+  //    Meta nunca reintegue el webhook aunque el agente tarde o la DB falle.
+  if (jobs.length > 0) {
+    after(async () => {
+      for (const job of jobs) {
+        try {
+          await processIncomingMessage(job.senderPhone, job.text, job.messageId, job.contact);
+        } catch (err) {
+          console.error("Error procesando mensaje en segundo plano:", err);
+        }
+      }
+    });
   }
 
   return NextResponse.json({ status: "ok" });
