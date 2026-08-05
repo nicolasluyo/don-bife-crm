@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse, after } from "next/server";
 import { db, customers, conversations, messages } from "@/lib/db";
-import { eq, and } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 import { runAgent } from "@/lib/agent";
 import { sendWhatsAppMessage } from "@/lib/whatsapp";
 
@@ -168,13 +168,17 @@ async function processIncomingMessage(
     return;
   }
 
-  // 5. Cargar historial y agrupar mensajes del batch actual (últimos 30s)
-  const history = await db
+  // 5. Cargar historial y agrupar mensajes del batch actual (últimos 30s).
+  //    Tomamos los 30 mensajes MÁS RECIENTES (desc + limit) y luego los
+  //    volvemos a ordenar cronológicamente. Con orden ascendente + limit se
+  //    cargaban los 30 más VIEJOS y el agente nunca veía los mensajes actuales.
+  const recent = await db
     .select()
     .from(messages)
     .where(eq(messages.conversationId, conversation.id))
-    .orderBy(messages.sentAt)
+    .orderBy(desc(messages.sentAt))
     .limit(30);
+  const history = recent.reverse();
 
   const windowStart = new Date(Date.now() - 30_000);
   const pendingIncoming = history.filter(
