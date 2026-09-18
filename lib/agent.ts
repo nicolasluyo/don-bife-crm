@@ -1,7 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { db, reservations, agentLogs, products, orders } from "./db";
 import { eq, and, sql } from "drizzle-orm";
-import { AGENT_SYSTEM_PROMPT, RESTAURANT_INFO } from "./constants";
+import { AGENT_SYSTEM_PROMPT, BUSINESS_INFO } from "./constants";
 import { sendReservationEmail, sendCancellationEmail, sendOrderEmail } from "./notifications";
 import { embedText } from "./embeddings";
 
@@ -14,20 +14,20 @@ function getAnthropic() {
 const tools: Anthropic.Tool[] = [
   {
     name: "check_availability",
-    description: "Verifica si hay disponibilidad para una fecha, hora y número de personas específicos.",
+    description: "Verifica si hay cupo disponible para una fecha y hora específicas antes de agendar una cita.",
     input_schema: {
       type: "object" as const,
       properties: {
         date: { type: "string", description: "Fecha en formato DD/MM/YYYY" },
-        time: { type: "string", description: "Hora en formato HH:MM (ej: 19:00)" },
-        guests: { type: "number", description: "Número de personas" },
+        time: { type: "string", description: "Hora en formato HH:MM (ej: 16:00)" },
+        guests: { type: "number", description: "Número de personas para la cita (usualmente 1)" },
       },
       required: ["date", "time", "guests"],
     },
   },
   {
     name: "create_reservation",
-    description: "Crea una reserva confirmada para el cliente.",
+    description: "Crea una cita confirmada para el cliente.",
     input_schema: {
       type: "object" as const,
       properties: {
@@ -35,16 +35,16 @@ const tools: Anthropic.Tool[] = [
         phone: { type: "string", description: "Teléfono o WhatsApp" },
         date: { type: "string", description: "Fecha en formato DD/MM/YYYY" },
         time: { type: "string", description: "Hora en formato HH:MM" },
-        guests: { type: "number", description: "Número de personas" },
-        occasion: { type: "string", description: "Ocasión o motivo (opcional)" },
-        notes: { type: "string", description: "Notas adicionales, ej: preferencia de sede (opcional)" },
+        guests: { type: "number", description: "Número de personas para la cita (usualmente 1)" },
+        occasion: { type: "string", description: "Servicio deseado (ej: Clásico, Degradado, Barba, Polaco Signature) (opcional)" },
+        notes: { type: "string", description: "Notas adicionales, ej: preferencias del cliente (opcional)" },
       },
       required: ["customerName", "phone", "date", "time", "guests"],
     },
   },
   {
     name: "get_reservation",
-    description: "Busca la reserva activa del cliente actual.",
+    description: "Busca la cita activa del cliente actual.",
     input_schema: {
       type: "object" as const,
       properties: {
@@ -55,11 +55,11 @@ const tools: Anthropic.Tool[] = [
   },
   {
     name: "modify_reservation",
-    description: "Modifica una reserva existente (fecha, hora o número de personas).",
+    description: "Modifica una cita existente (fecha, hora o número de personas).",
     input_schema: {
       type: "object" as const,
       properties: {
-        reservationId: { type: "number", description: "ID de la reserva" },
+        reservationId: { type: "number", description: "ID de la cita" },
         date: { type: "string", description: "Nueva fecha (opcional)" },
         time: { type: "string", description: "Nueva hora (opcional)" },
         guests: { type: "number", description: "Nuevo número de personas (opcional)" },
@@ -70,25 +70,25 @@ const tools: Anthropic.Tool[] = [
   },
   {
     name: "cancel_reservation",
-    description: "Cancela una reserva existente.",
+    description: "Cancela una cita existente.",
     input_schema: {
       type: "object" as const,
       properties: {
-        reservationId: { type: "number", description: "ID de la reserva a cancelar" },
+        reservationId: { type: "number", description: "ID de la cita a cancelar" },
       },
       required: ["reservationId"],
     },
   },
   {
-    name: "search_menu",
+    name: "search_services",
     description:
-      "Busca platos, bebidas y postres en la carta real de Los Postres de Patty por similitud semántica. ÚSALA SIEMPRE que el cliente pregunte por cualquier comida, bebida, postre, precio, ingrediente o disponibilidad del menú (ej: '¿qué tortas tienen?', 'algo frío con café', '¿cuánto cuesta el cheesecake?'). Devuelve los productos más parecidos con su precio. No inventes productos ni precios: usa solo lo que devuelve esta herramienta.",
+      "Busca servicios de la barbería Sr. Polaco (cortes, barba, combos, tratamientos) por similitud semántica. ÚSALA SIEMPRE que el cliente pregunte por cualquier servicio, precio o disponibilidad del catálogo (ej: '¿cuánto cuesta el corte?', '¿tienen Black Mask?', '¿qué incluye el Polaco Signature?'). Devuelve los servicios más parecidos con su precio. No inventes servicios ni precios: usa solo lo que devuelve esta herramienta.",
     input_schema: {
       type: "object" as const,
       properties: {
         query: {
           type: "string",
-          description: "Lo que busca el cliente, en sus propias palabras (ej: 'tortas de chocolate', 'café frío', 'algo para compartir').",
+          description: "Lo que busca el cliente, en sus propias palabras (ej: 'corte y barba', 'tratamiento facial', 'algo con cejas').",
         },
       },
       required: ["query"],
@@ -97,16 +97,16 @@ const tools: Anthropic.Tool[] = [
   {
     name: "create_order",
     description:
-      "Registra un PEDIDO de pastelería (torta, postre, etc.) para encargar/llevar. Úsala solo cuando el cliente confirme que quiere encargar un producto, NO para reservar una mesa (para eso está create_reservation). Antes de llamarla confirma con el cliente los 5 datos requeridos. Recuerda que las tortas necesitan al menos 24-48 h de anticipación.",
+      "Registra un PEDIDO de un producto de venta (perfume, pomada, cera, etc.) para encargar/comprar. Úsala solo cuando el cliente confirme que quiere encargar un producto, NO para agendar una cita (para eso está create_reservation). Antes de llamarla confirma con el cliente los 5 datos requeridos. Si aún no hay catálogo cargado de estos productos, confirma disponibilidad con el cliente antes de asumir que existe.",
     input_schema: {
       type: "object" as const,
       properties: {
         customerName: { type: "string", description: "Nombre del cliente" },
         phone: { type: "string", description: "Teléfono o WhatsApp del cliente" },
-        product: { type: "string", description: "Producto que desea pedir (ej: 'Torta Red Velvet corazón')" },
-        dueDate: { type: "string", description: "Fecha en que lo necesita, formato DD/MM/YYYY" },
+        product: { type: "string", description: "Producto que desea pedir (ej: 'Perfume Bleu', 'Pomada mate')" },
+        dueDate: { type: "string", description: "Fecha en que desea recogerlo, formato DD/MM/YYYY" },
         deliveryType: { type: "string", enum: ["recojo", "delivery"], description: "Tipo de entrega: recojo en tienda o delivery" },
-        notes: { type: "string", description: "Detalles adicionales del pedido (sabor, tamaño, dedicatoria, etc.) (opcional)" },
+        notes: { type: "string", description: "Detalles adicionales del pedido (marca, presentación, etc.) (opcional)" },
       },
       required: ["customerName", "phone", "product", "dueDate", "deliveryType"],
     },
@@ -136,7 +136,7 @@ async function executeTool(
         );
 
       const occupied = Number(existing[0]?.totalGuests ?? 0);
-      const available = RESTAURANT_INFO.capacity.maxPerSlot - occupied;
+      const available = BUSINESS_INFO.capacity.maxPerSlot - occupied;
 
       if (available >= guests) {
         result = `Hay disponibilidad para ${guests} personas el ${date} a las ${time}. Quedan ${available} cupos en ese horario.`;
@@ -173,7 +173,7 @@ async function executeTool(
 
       await sendReservationEmail(reservation).catch(console.error);
 
-      result = `Reserva creada exitosamente. ID: ${reservation.id}. ${input.customerName} — ${input.guests} personas — ${input.date} a las ${input.time}.`;
+      result = `Cita creada exitosamente. ID: ${reservation.id}. ${input.customerName} — ${input.guests} persona(s) — ${input.date} a las ${input.time}.`;
     }
 
     else if (toolName === "get_reservation") {
@@ -191,8 +191,8 @@ async function executeTool(
         .limit(1);
 
       result = reservation
-        ? `Reserva encontrada — ID: ${reservation.id}, ${reservation.customerName}, ${reservation.guests} personas, ${reservation.date} a las ${reservation.time}.`
-        : "No se encontró ninguna reserva activa para este cliente.";
+        ? `Cita encontrada — ID: ${reservation.id}, ${reservation.customerName}, ${reservation.guests} persona(s), ${reservation.date} a las ${reservation.time}.`
+        : "No se encontró ninguna cita activa para este cliente.";
     }
 
     else if (toolName === "modify_reservation") {
@@ -209,7 +209,7 @@ async function executeTool(
         .set({ ...updates, status: "modified", updatedAt: new Date() })
         .where(eq(reservations.id, reservationId));
 
-      result = `Reserva ${reservationId} modificada exitosamente.`;
+      result = `Cita ${reservationId} modificada exitosamente.`;
     }
 
     else if (toolName === "cancel_reservation") {
@@ -224,10 +224,10 @@ async function executeTool(
         await sendCancellationEmail(reservation).catch(console.error);
       }
 
-      result = `Reserva ${reservationId} cancelada correctamente.`;
+      result = `Cita ${reservationId} cancelada correctamente.`;
     }
 
-    else if (toolName === "search_menu") {
+    else if (toolName === "search_services") {
       const { query } = toolInput as { query: string };
       const embedding = await embedText(query);
       const vectorLiteral = JSON.stringify(embedding);
@@ -253,7 +253,7 @@ async function executeTool(
               return `${m.producto} (${cat})${precio}${desc}`;
             })
             .join("\n")
-        : "No encontré productos en la carta que coincidan con esa búsqueda.";
+        : "No encontré servicios en el catálogo que coincidan con esa búsqueda.";
     }
 
     else if (toolName === "create_order") {

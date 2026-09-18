@@ -8,7 +8,7 @@ export default function CustomersPage() {
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-stone-900">Clientes</h1>
         <p className="text-stone-500 text-sm mt-1">
-          Clientes que han contactado a Los Postres de Patty por WhatsApp
+          Clientes que han contactado a Sr. Polaco por WhatsApp
         </p>
       </div>
       <CustomersClient />

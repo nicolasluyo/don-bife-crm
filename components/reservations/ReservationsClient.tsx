@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { RESTAURANT_INFO } from "@/lib/constants";
+import { BUSINESS_INFO } from "@/lib/constants";
 import {
   CalendarDays,
   Clock,
@@ -53,7 +53,7 @@ export default function ReservationsClient() {
   useEffect(() => { fetch_(); }, [statusFilter]);
 
   async function cancelReservation(id: number) {
-    if (!confirm("¿Cancelar esta reserva?")) return;
+    if (!confirm("¿Cancelar esta cita?")) return;
     await fetch(`/api/reservations/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -101,7 +101,7 @@ export default function ReservationsClient() {
           onClick={() => setShowModal(true)}
           className="flex items-center gap-2 px-4 py-2 bg-red-800 text-white rounded-lg text-sm font-medium hover:bg-red-900 transition-colors"
         >
-          <Plus className="w-4 h-4" /> Nueva reserva
+          <Plus className="w-4 h-4" /> Nueva cita
         </button>
       </div>
 
@@ -115,7 +115,7 @@ export default function ReservationsClient() {
         ) : reservations.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-stone-400">
             <CalendarDays className="w-12 h-12 mb-3 opacity-30" />
-            <p className="font-medium">Sin reservas</p>
+            <p className="font-medium">Sin citas</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -125,7 +125,7 @@ export default function ReservationsClient() {
                 <th className="text-left px-4 py-3 font-medium text-stone-500">Cliente</th>
                 <th className="text-left px-4 py-3 font-medium text-stone-500">Fecha y hora</th>
                 <th className="text-left px-4 py-3 font-medium text-stone-500">Personas</th>
-                <th className="text-left px-4 py-3 font-medium text-stone-500">Ocasión</th>
+                <th className="text-left px-4 py-3 font-medium text-stone-500">Servicio</th>
                 <th className="text-left px-4 py-3 font-medium text-stone-500">Estado</th>
                 <th className="text-right px-4 py-3 font-medium text-stone-500">Acciones</th>
               </tr>
@@ -217,8 +217,8 @@ function NewReservationModal({
     customerName: "",
     phone: "",
     date: "",
-    time: "19:00",
-    guests: 2,
+    time: "16:00",
+    guests: 1,
     occasion: "",
     notes: "",
   });
@@ -242,7 +242,7 @@ function NewReservationModal({
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
         <div className="px-6 py-5 border-b border-stone-200">
-          <h2 className="font-semibold text-stone-900">Nueva reserva 🔥</h2>
+          <h2 className="font-semibold text-stone-900">Nueva cita</h2>
         </div>
         <form onSubmit={submit} className="p-6 space-y-4">
           <div className="grid grid-cols-2 gap-3">
@@ -272,7 +272,7 @@ function NewReservationModal({
                 type="number"
                 required
                 min={1}
-                max={30}
+                max={6}
                 value={form.guests}
                 onChange={(e) => set("guests", parseInt(e.target.value))}
                 className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
@@ -295,7 +295,7 @@ function NewReservationModal({
                 onChange={(e) => set("time", e.target.value)}
                 className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
               >
-                {RESTAURANT_INFO.capacity.timeSlots.map((t) => (
+                {BUSINESS_INFO.capacity.timeSlots.map((t) => (
                   <option key={t} value={t}>
                     {t}
                   </option>
@@ -303,15 +303,15 @@ function NewReservationModal({
               </select>
             </div>
             <div className="col-span-2">
-              <label className="block text-xs font-medium text-stone-600 mb-1">Ocasión</label>
+              <label className="block text-xs font-medium text-stone-600 mb-1">Servicio deseado</label>
               <select
                 value={form.occasion}
                 onChange={(e) => set("occasion", e.target.value)}
                 className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700"
               >
-                <option value="">No especificada</option>
-                {RESTAURANT_INFO.occasions.map((o) => (
-                  <option key={o} value={o}>{o}</option>
+                <option value="">No especificado</option>
+                {BUSINESS_INFO.services.map((s) => (
+                  <option key={s} value={s}>{s}</option>
                 ))}
               </select>
             </div>
@@ -321,7 +321,7 @@ function NewReservationModal({
                 value={form.notes}
                 onChange={(e) => set("notes", e.target.value)}
                 rows={2}
-                placeholder="Ej: prefieren Sede Santa Isabel, alérgicos a mariscos..."
+                placeholder="Ej: preferencias del cliente..."
                 className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-700 resize-none"
               />
             </div>
@@ -340,7 +340,7 @@ function NewReservationModal({
               disabled={saving}
               className="flex-1 px-4 py-2 bg-red-800 text-white rounded-lg text-sm font-medium hover:bg-red-900 disabled:opacity-60"
             >
-              {saving ? "Guardando…" : "Crear reserva"}
+              {saving ? "Guardando…" : "Crear cita"}
             </button>
           </div>
         </form>

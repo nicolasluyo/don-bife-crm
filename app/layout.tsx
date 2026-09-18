@@ -6,8 +6,8 @@ import AppShell from "@/components/AppShell";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Los Postres de Patty CRM — Agente IA",
-  description: "Panel de gestión de conversaciones y reservas de Los Postres de Patty — Pastelería y cafetería en Real Plaza Piura",
+  title: "Sr. Polaco CRM — Agente IA",
+  description: "Panel de gestión de conversaciones y citas de Sr. Polaco — Barbería Clásica en Urb. Santa Isabel, Piura",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

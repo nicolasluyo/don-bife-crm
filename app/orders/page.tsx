@@ -8,7 +8,7 @@ export default function OrdersPage() {
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-stone-900">Pedidos</h1>
         <p className="text-stone-500 text-sm mt-1">
-          Pedidos de pastelería registrados por el agente IA
+          Pedidos de productos registrados por el agente IA
         </p>
       </div>
       <OrdersClient />

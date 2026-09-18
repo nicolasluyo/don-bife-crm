@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const REALM = "Los Postres de Patty CRM";
+const REALM = "Sr. Polaco CRM";
 
 // Protege el panel y las APIs con autenticación básica (usuario/contraseña por
 // variables de entorno). El webhook de WhatsApp se excluye en el matcher porque

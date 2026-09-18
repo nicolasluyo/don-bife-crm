@@ -9,13 +9,13 @@ import {
   CalendarDays,
   ShoppingBag,
   Users,
-  CakeSlice,
+  Scissors,
 } from "lucide-react";
 
 const nav = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/conversations", label: "Conversaciones", icon: MessageSquare },
-  { href: "/reservations", label: "Reservas", icon: CalendarDays },
+  { href: "/reservations", label: "Citas", icon: CalendarDays },
   { href: "/orders", label: "Pedidos", icon: ShoppingBag },
   { href: "/customers", label: "Clientes", icon: Users },
 ];
@@ -28,11 +28,11 @@ export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
       <div className="px-6 py-5 border-b border-stone-200">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 bg-red-800 rounded-xl flex items-center justify-center">
-            <CakeSlice className="w-5 h-5 text-white" />
+            <Scissors className="w-5 h-5 text-white" />
           </div>
           <div>
-            <p className="font-semibold text-stone-900 text-sm leading-tight">Los Postres de Patty</p>
-            <p className="text-xs text-stone-500">Agente IA 🍰</p>
+            <p className="font-semibold text-stone-900 text-sm leading-tight">Sr. Polaco</p>
+            <p className="text-xs text-stone-500">Agente IA</p>
           </div>
         </div>
       </div>

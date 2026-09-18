@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Sidebar from "./Sidebar";
 import { cn } from "@/lib/utils";
-import { Menu, X, CakeSlice } from "lucide-react";
+import { Menu, X, Scissors } from "lucide-react";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
@@ -59,9 +59,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           </button>
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 bg-red-800 rounded-lg flex items-center justify-center">
-              <CakeSlice className="w-4 h-4 text-white" />
+              <Scissors className="w-4 h-4 text-white" />
             </div>
-            <span className="font-semibold text-stone-900 text-sm">Los Postres de Patty</span>
+            <span className="font-semibold text-stone-900 text-sm">Sr. Polaco</span>
           </div>
         </header>
 
