@@ -30,7 +30,7 @@ export default function MetricsCards({ metrics }: MetricsCardsProps) {
       bg: "bg-emerald-50",
     },
     {
-      label: "Reservas confirmadas",
+      label: "Citas confirmadas",
       value: metrics.confirmedReservations,
       sub: "Total en sistema",
       icon: CalendarDays,

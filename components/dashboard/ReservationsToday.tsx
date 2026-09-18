@@ -12,7 +12,7 @@ export default function ReservationsToday({ reservations }: { reservations: Rese
   return (
     <div className="bg-white rounded-xl border border-stone-200 p-6 h-full">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-sm font-semibold text-stone-700">Reservas de hoy</h2>
+        <h2 className="text-sm font-semibold text-stone-700">Citas de hoy</h2>
         <span className="text-xs bg-red-100 text-red-800 px-2 py-0.5 rounded-full font-medium">
           {reservations.length}
         </span>
@@ -21,7 +21,7 @@ export default function ReservationsToday({ reservations }: { reservations: Rese
       {reservations.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-8 text-stone-400">
           <CalendarDays className="w-8 h-8 mb-2 opacity-40" />
-          <p className="text-sm">Sin reservas para hoy</p>
+          <p className="text-sm">Sin citas para hoy</p>
         </div>
       ) : (
         <div className="space-y-3 overflow-y-auto max-h-48">
